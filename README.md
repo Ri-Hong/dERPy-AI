@@ -1,4 +1,4 @@
-# derpy_ai
+# dERPy_ai
 
 A new Flutter project.
 
