@@ -75,7 +75,7 @@ void _sendMessage() {
   if (_textController.text.isNotEmpty) {
     setState(() {
       _messages.insert(0, Message(text: _textController.text, isUser: true, promptIndex: currentPromptIndex));
-      _messages.insert(0, Message(text: "", isUser: false, isLoading: true, iconIndex: 0, promptIndex: currentPromptIndex)); // Set iconIndex to 0 for a new bot message and set the promptIndex
+      _messages.insert(0, Message(text: "", isUser: false, isLoading: true, iconIndex: -1, promptIndex: currentPromptIndex)); // Set iconIndex to -1 for no icon initially
     });
     
     _sequenceIconsAndResponse(currentPromptIndex, _messages[0]); // Pass the specific message to the method
@@ -84,29 +84,29 @@ void _sendMessage() {
     _textController.clear();  // Clear the textfield
   }
 }
-
-
-
-
 void _sequenceIconsAndResponse(int promptIndex, Message message) {
-  if (message.iconIndex < icons[promptIndex].length - 1) {
-    // If there are more icons in the sequence, show the next one after a delay
-    Future.delayed(Duration(seconds: Random().nextInt(3) + 2), () {
+  // Introduce a delay before starting the icon sequence
+  Future.delayed(Duration(seconds: 1), () {
+    if (message.iconIndex < icons[promptIndex].length - 1) {
+      // Increment the iconIndex to start the icon sequence
       setState(() {
-        message.iconIndex++; // Move to the next icon in the sequence for the specific message
+        message.iconIndex++;
       });
-      _sequenceIconsAndResponse(promptIndex, message); // Recursive call with the specific message
-    });
-  } else {
-    // If all icons in the sequence have been shown, display the bot response
-    Future.delayed(Duration(seconds: Random().nextInt(3) + 2), () {
+
+      // If there are more icons in the sequence, show the next one after a delay
+      Future.delayed(Duration(seconds: Random().nextInt(3) + 2), () {
+        _sequenceIconsAndResponse(promptIndex, message); // Recursive call with the specific message
+      });
+    } else {
+      // If all icons in the sequence have been shown, display the bot response immediately
       setState(() {
         message.text = responses[promptIndex];
         message.isLoading = false;
       });
-    });
-  }
+    }
+  });
 }
+
 
 
 List<TextSpan> _parseResponse(String response, String linkUrl) {
@@ -173,8 +173,10 @@ List<TextSpan> _parseResponse(String response, String linkUrl) {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Image.asset(icons[message.promptIndex][message.iconIndex], fit: BoxFit.cover, height: 30,),
-                              SizedBox(width: 8.0), // Spacing between the icon and the loading GIF
+                              if (message.iconIndex >= 0) ...[ // Use the spread operator
+                                Image.asset(icons[message.promptIndex][message.iconIndex], fit: BoxFit.cover, height: 30,),
+                                SizedBox(width: 8.0), // Spacing between the icon and the loading GIF
+                              ],
                               Container(
                                 width: 50.0,  // Set the desired width for the loading GIF
                                 height: 50.0, // Set the desired height for the loading GIF
