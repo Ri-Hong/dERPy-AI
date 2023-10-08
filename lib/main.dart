@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:math'; // Import for the Random class
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/gestures.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -8,9 +12,34 @@ class Message {
   String text;
   final bool isUser; // true if the message is from the user, false if from the chatbot
   bool isLoading; // New attribute to track loading state for each message
+  int iconIndex; // to track the current icon in the sequence
+  int promptIndex; // to track the associated prompt index for each bot message
 
-  Message({required this.text, required this.isUser, this.isLoading = false});
+  Message({required this.text, required this.isUser, this.isLoading = false, this.iconIndex = 0, required this.promptIndex});
 }
+
+
+// Sample data
+List<String> responses = [
+  "Who is this for?",
+  "It seems like this customer doesn't exist in our records. Would you like to create a new customer record?",
+  "Great, David has been added in the contacts module here <Insert Link>. What products are David interested in?",
+  "Invoice <Insert ID Here> successfully created! You can check it out in the sales module here <Insert Link>.",
+];
+
+List<List<String>> icons = [
+  ['assets/OdooSalesIcon.png'],
+  ['assets/OdooContactsIcon.png'],
+  ['assets/OdooContactsIcon.png', 'assets/OdooSalesIcon.png'],
+  ['assets/OdooInventoryIcon.png', 'assets/OdooSalesIcon.png']
+];
+
+List<String> links = [
+  "A Link",
+  "B Link",
+  "C Link",
+  "D Link",
+];
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key); // Fixed super.key to Key? key
@@ -40,25 +69,65 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Message> _messages = [];
   final TextEditingController _textController = TextEditingController();
   bool isLoading = false; // New state variable
+  int currentPromptIndex = 0; // New state variable to track the current prompt index
 
-  void _sendMessage() {
-    if (_textController.text.isNotEmpty) {
+void _sendMessage() {
+  if (_textController.text.isNotEmpty) {
+    setState(() {
+      _messages.insert(0, Message(text: _textController.text, isUser: true, promptIndex: currentPromptIndex));
+      _messages.insert(0, Message(text: "", isUser: false, isLoading: true, iconIndex: 0, promptIndex: currentPromptIndex)); // Set iconIndex to 0 for a new bot message and set the promptIndex
+    });
+    
+    _sequenceIconsAndResponse(currentPromptIndex, _messages[0]); // Pass the specific message to the method
+    currentPromptIndex++; // Increment the prompt index for the next user prompt
+  }
+}
+
+
+
+void _sequenceIconsAndResponse(int promptIndex, Message message) {
+  if (message.iconIndex < icons[promptIndex].length - 1) {
+    // If there are more icons in the sequence, show the next one after a delay
+    Future.delayed(Duration(seconds: Random().nextInt(3) + 2), () {
       setState(() {
-        _messages.insert(0, Message(text: _textController.text, isUser: true));
-        _messages.insert(0, Message(text: "Loading...", isUser: false, isLoading: true)); // Set isLoading to true for the bot's response
+        message.iconIndex++; // Move to the next icon in the sequence for the specific message
       });
-      
-      // Simulate a delay for the loading animation
-      Future.delayed(Duration(seconds: 5), () {
-        setState(() {
-          _messages[0].isLoading = false; // Stop loading animation for the bot's response
-          _messages[0].text = "Bot reply to: ${_textController.text}";
-        });
+      _sequenceIconsAndResponse(promptIndex, message); // Recursive call with the specific message
+    });
+  } else {
+    // If all icons in the sequence have been shown, display the bot response
+    Future.delayed(Duration(seconds: Random().nextInt(3) + 2), () {
+      setState(() {
+        message.text = responses[promptIndex];
+        message.isLoading = false;
       });
+    });
+  }
+}
 
-      _textController.clear();
+
+List<TextSpan> _parseResponse(String response, String linkUrl) {
+  List<TextSpan> spans = [];
+  var parts = response.split('<Insert Link>');
+
+  for (int i = 0; i < parts.length; i++) {
+    spans.add(TextSpan(text: parts[i]));
+    if (i < parts.length - 1) {
+      spans.add(TextSpan(
+        text: 'here',
+        style: TextStyle(color: Colors.blue),
+        recognizer: TapGestureRecognizer()
+          ..onTap = () {
+            // Open the link
+            launch(linkUrl);
+          },
+      ));
     }
   }
+  return spans;
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       margin: EdgeInsets.all(8.0),
                       padding: EdgeInsets.all(12.0),
                       decoration: BoxDecoration(
-                        color: message.isUser ? Color.fromARGB(255, 167, 238, 229) : Color.fromARGB(255, 233, 233, 233),
+                        color: message.isUser ? Color.fromARGB(255, 167, 238, 229) : Color.fromARGB(255, 228, 228, 225),
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: message.isUser
@@ -97,22 +166,32 @@ class _MyHomePageState extends State<MyHomePage> {
                             textAlign: TextAlign.right,
                           )
                         : message.isLoading
-                            ? Container(
-                                width: 30.0,  // Set the desired width
-                                height: 30.0, // Set the desired height
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Image.asset(icons[message.promptIndex][message.iconIndex], fit: BoxFit.cover, height: 30,),
+                              SizedBox(width: 8.0), // Spacing between the icon and the loading GIF
+                              Container(
+                                width: 50.0,  // Set the desired width for the loading GIF
+                                height: 50.0, // Set the desired height for the loading GIF
                                 child: Image.asset('assets/loading.gif'),
-                              )
+                              ),
+                            ],
+                          )
                             : Row(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Image.asset('assets/OdooSalesIcon.png', fit: BoxFit.cover, height: 30,),
+                                  Image.asset(icons[message.promptIndex][message.iconIndex], fit: BoxFit.cover, height: 30,),
                                   SizedBox(width: 8.0),
                                   ConstrainedBox(
                                     constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-                                    child: Text(
-                                      message.text,
-                                      style: TextStyle(color: Colors.black),
+                                    child: RichText( // <-- This is the new part
+                                      text: TextSpan(
+                                        style: TextStyle(color: Colors.black),
+                                        children: _parseResponse(message.text, links[message.promptIndex]),
+                                      ),
                                     ),
                                   ),
                                 ],
