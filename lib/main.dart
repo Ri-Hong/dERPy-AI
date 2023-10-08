@@ -216,8 +216,9 @@ List<TextSpan> _parseResponse(String response, String linkUrl) {
                   child: TextField(
                     controller: _textController,
                     decoration: InputDecoration(
-                      hintText: 'Ask Derpy a question!',
-                        hoverColor: Colors.transparent,  // Disable hover effect
+                      contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0), // Adjust the vertical padding
+                      hintText: 'Ask Derpy for help!',
+                      hoverColor: Colors.transparent,  // Disable hover effect
                       hintStyle: TextStyle(color: Color.fromARGB(255, 111, 116, 141).withOpacity(0.8)), // Adjust the opacity as needed
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(5.0), // Adjust for desired roundness
@@ -229,20 +230,20 @@ List<TextSpan> _parseResponse(String response, String linkUrl) {
                       filled: true, // Add this line
                       fillColor: Color.fromARGB(255, 167, 238, 229), // Change to your desired color
                       suffixIcon: Container(
-                        width: 45, // Set a fixed width for the container
-                        height: 45, // Set a fixed height for the container
+                        width: 30, // Set a fixed width for the container
+                        height: 30, // Set a fixed height for the container
                         decoration: BoxDecoration(
                           color: Color.fromARGB(255, 29, 221, 195),
                           borderRadius: BorderRadius.circular(5.0),
                         ),
-                        margin: EdgeInsets.only(right: 7.0),
+                        margin: EdgeInsets.only(right: 4.0),
                         child: MouseRegion(
                           onHover: (event) {
                             // Handle hover effect here if needed
                           },
                           child: Material(
                             color: Colors.transparent,
-                            child: ClipRRect( // Add this
+                            child: ClipRRect(
                               borderRadius: BorderRadius.circular(5.0), // Match the Container's borderRadius
                               child: InkWell(
                                 onTap: _sendMessage,
