@@ -54,6 +54,12 @@ dev_dependencies:
 flutter:
   assets:
     - assets/derpyHeader.png
+    - assets/OdooContactsIcon.png
+    - assets/OdooInventoryIcon.png
+    - assets/OdooSalesIcon.png
+    - assets/Loading.gif
+
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
