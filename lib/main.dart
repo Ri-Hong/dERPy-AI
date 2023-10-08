@@ -23,8 +23,8 @@ class Message {
 List<String> responses = [
   "Who is this for?",
   "It seems like this customer doesn't exist in our records. Would you like to create a new customer record?",
-  "Great, David has been added in the contacts module here <Insert Link>. What products are David interested in?",
-  "Invoice <Insert ID Here> successfully created! You can check it out in the sales module here <Insert Link>.",
+  "Great, David has been added in the contacts module <Insert Link>. What products are David interested in?",
+  "Invoice <Insert ID Here> successfully created! You can check it out in the sales module <Insert Link>.",
 ];
 
 List<List<String>> icons = [
@@ -80,8 +80,11 @@ void _sendMessage() {
     
     _sequenceIconsAndResponse(currentPromptIndex, _messages[0]); // Pass the specific message to the method
     currentPromptIndex++; // Increment the prompt index for the next user prompt
+
+    _textController.clear();  // Clear the textfield
   }
 }
+
 
 
 
